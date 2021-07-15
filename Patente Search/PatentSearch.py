@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import re
+import pandas as pd
 
 from icecream import ic
 
@@ -15,7 +16,7 @@ def extract_links(pages):
     for page in range(1,pages+1):
         r = requests.get(url_page + str(page) + url_search)
         soup = BeautifulSoup(r.content,"lxml")
-        rows = soup.find_all('tr')#, attrs={'class':'rowalt'})
+        rows = soup.find_all('tr')
         rows = rows[2:-2]
         for row in rows:
             links.append(row.find('a')['href'])
@@ -24,7 +25,7 @@ def extract_links(pages):
 def extract_patents(pages):
     links = extract_links(pages)
     table = []
-    for link in [links[-1]]:
+    for link in links:
         r = requests.get(url + link)
         soup = BeautifulSoup(r.content,"lxml")
         
@@ -36,9 +37,6 @@ def extract_patents(pages):
             value = container.find('div', attrs={'class':'disp_elm_text'})
             
             try:
-                ic(title.getText())
-                ic(value.getText())
-                #if not value.getText() or not title.getText():
                 dict[title.getText().strip().replace(':', '')] = re.sub(' +', ' ', value.getText().strip())
                 if 'International Classes' in dict.keys():
                     dict['International Classes'] = dict['International Classes'].replace(';', '\n')
@@ -46,9 +44,9 @@ def extract_patents(pages):
                 continue
         #ic(bool(dict))
         del dict['']
-        ic(dict)
         table.append(dict)
-    ic(len(table))
+    df = pd.DataFrame(table)
+    ic(df)
     
           
 extract_patents(2)
